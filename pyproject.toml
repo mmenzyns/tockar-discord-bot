@@ -8,5 +8,5 @@ dependencies = [
     "discord-py>=2.4.0",
     "dotenv>=0.9.9",
     "environ-config>=24.0.0",
-    "python-dotenv>=1.0.0",
+    "wheelspin-gif>=1.0.0",
 ]

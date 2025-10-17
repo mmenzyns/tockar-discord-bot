@@ -142,16 +142,6 @@ async def main():
             )
             return
         
-        # Check if user has any role (excluding @everyone)
-        user_roles = [role for role in interaction.user.roles if role.name != "@everyone"]
-        
-        if not user_roles:
-            await interaction.response.send_message(
-                "❌ Nemáš oprávnění použít tento příkaz! Musíš mít přiřazenou alespoň jednu roli.",
-                ephemeral=True
-            )
-            return
-        
         # Defer the response since creating the GIF might take time
         await interaction.response.defer()
         

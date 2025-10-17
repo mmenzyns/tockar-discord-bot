@@ -37,4 +37,4 @@ RUN uv pip install -r pyproject.toml
 COPY tockar-discord-bot/. .
 
 # Run the bot
-CMD ["python", "main.py"]
+CMD ["python", "app.py"]
