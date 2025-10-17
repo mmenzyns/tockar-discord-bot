@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: ..
+      dockerfile: tockar-discord-bot/Dockerfile
+    container_name: tockar-discord-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Override or add environment variables here
+      - DISCORD_BOT_PREFIX=${DISCORD_BOT_PREFIX:-!}
+    volumes:
+      # Mount logs directory if you want to persist logs
+      - ./logs:/app/logs
+      # Mount wheelspin project for dynamic development
+      - ../wheelspin-gif-python:/wheelspin-gif-python:ro

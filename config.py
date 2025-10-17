@@ -1,0 +1,44 @@
+"""Configuration management using environ-config."""
+import environ
+
+
+@environ.config(prefix="DISCORD")
+class BotConfig:
+    """Discord bot configuration."""
+    
+    @environ.config
+    class Bot:
+        """Bot-specific configuration."""
+        token = environ.var(help="Discord bot token")
+        prefix = environ.var(default="!", help="Command prefix")
+        
+    @environ.config
+    class Guild:
+        """Guild-specific configuration."""
+        ids = environ.var(
+            default=None, 
+            converter=lambda x: [int(id.strip()) for id in x.split(',')] if x else None, 
+            help="Comma-separated Guild IDs for development (e.g., '123456789,987654321')"
+        )
+    
+    @environ.config
+    class Users:
+        """User-specific configuration."""
+        allowed_ids = environ.var(
+            default=None,
+            converter=lambda x: [int(id.strip()) for id in x.split(',')] if x else None,
+            help="Comma-separated User IDs allowed to use commands (e.g., '123456789,987654321')"
+        )
+    
+    bot = environ.group(Bot)
+    guild = environ.group(Guild)
+    users = environ.group(Users)
+
+
+def load_config() -> BotConfig:
+    """Load configuration from environment variables.
+    
+    Returns:
+        BotConfig: Loaded configuration object.
+    """
+    return environ.to_config(BotConfig)
