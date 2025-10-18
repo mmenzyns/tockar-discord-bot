@@ -1,6 +1,7 @@
 """Discord bot main entry point."""
 import asyncio
 import logging
+import time
 
 import discord
 import wheelspin
@@ -31,14 +32,11 @@ class TockarBot(commands.Bot):
         try:
             if self.guild_ids:
                 # Sync to specific guilds for instant updates (development)
-                total_synced = 0
                 for guild_id in self.guild_ids:
                     guild = discord.Object(id=guild_id)
                     self.tree.copy_global_to(guild=guild)
                     synced = await self.tree.sync(guild=guild)
-                    total_synced += len(synced)
                     logger.info(f"Synced {len(synced)} command(s) to guild {guild_id}")
-                logger.info(f"Total synced: {total_synced} command(s) across {len(self.guild_ids)} guild(s)")
             else:
                 # Sync globally (takes up to 1 hour)
                 synced = await self.tree.sync()
@@ -99,6 +97,9 @@ async def main():
             )
             return
         
+        # Start timing
+        start_time = time.time()
+        
         # Defer the response since creating the GIF might take time
         await interaction.response.defer()
         
@@ -125,10 +126,20 @@ async def main():
             output_file="tocka_wheel.gif"
         )
         
+        # Calculate execution time
+        end_time = time.time()
+        execution_time = end_time - start_time
+        
         # Send the result
         await interaction.followup.send(
             content=f"🎉 **{winner}** vyhrál Točku! 🎉",
             file=discord.File("tocka_wheel.gif")
+        )
+        
+        # Send timing info as ephemeral message
+        await interaction.followup.send(
+            content=f"⏱️ Generace točky trvala {execution_time:.2f} sekund",
+            ephemeral=True
         )
 
     @bot.tree.command(name="tocka-roles", description="Roztočí kolo štěstí pouze s uživateli, kteří mají nějakou roli!")
