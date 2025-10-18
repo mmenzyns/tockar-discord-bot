@@ -11,7 +11,7 @@ import discord
 from discord.ext import commands
 from PIL import Image
 
-from .gif_features import ImageHandler
+from .features import ImageHandler
 from config import load_config
 
 

@@ -208,11 +208,11 @@ async def main():
         
         # Send the result
         await interaction.followup.send(
-            content=f"🎉 **{winner}** vyhrál/a Točku! (pouze uživatelé s rolemi) 🎉",
+            content=f"🎉 **{winner}** vyhrál/a Točku! 🎉",
             file=discord.File("tocka_wheel.gif")
         )
 
-    @bot.tree.command(name="cudlik", description="Ukáže délku tvého čudlíku!")
+    @bot.tree.command(name="cudlik", description="Ukáž délku svého čudlíku!")
     async def cudlik(interaction: discord.Interaction):
         length = random.randint(0, 25)
         await interaction.response.send_message(f"Tvůj čudlík má délku: {length}")
@@ -238,14 +238,6 @@ async def main():
     @time_command("Pet")
     async def pet(interaction: discord.Interaction, user: discord.User = None):
         """Pet someone with animated GIF."""
-        # Check permissions
-        if config.users.allowed_ids and interaction.user.id not in config.users.allowed_ids:
-            await interaction.response.send_message(
-                "❌ Nemáš oprávnění použít tento příkaz!",
-                ephemeral=True
-            )
-            return
-        
         await interaction.response.defer()
         target_user = user or interaction.user
         
@@ -277,14 +269,6 @@ async def main():
     @time_command("Bonk")
     async def bonk(interaction: discord.Interaction, user: discord.User = None):
         """Bonk someone with animated GIF."""
-        # Check permissions
-        if config.users.allowed_ids and interaction.user.id not in config.users.allowed_ids:
-            await interaction.response.send_message(
-                "❌ Nemáš oprávnění použít tento příkaz!",
-                ephemeral=True
-            )
-            return
-        
         await interaction.response.defer()
         target_user = user or interaction.user
         
@@ -298,9 +282,8 @@ async def main():
                 format="GIF",
                 save_all=True,
                 append_images=frames[1:],
-                duration=60,
+                duration=30,
                 loop=0,
-                transparency=0,
                 disposal=2,
                 optimize=False,
             )
@@ -316,14 +299,6 @@ async def main():
     @time_command("Catnap")
     async def catnap(interaction: discord.Interaction, user: discord.User = None):
         """Catnap someone with animated GIF."""
-        # Check permissions
-        if config.users.allowed_ids and interaction.user.id not in config.users.allowed_ids:
-            await interaction.response.send_message(
-                "❌ Nemáš oprávnění použít tento příkaz!",
-                ephemeral=True
-            )
-            return
-        
         await interaction.response.defer()
         target_user = user or interaction.user
         
