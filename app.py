@@ -1,5 +1,6 @@
 """Discord bot main entry point."""
 import asyncio
+import functools
 import logging
 import time
 
@@ -18,6 +19,33 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def time_command(operation_name: str):
+    """Decorator to time command execution and send ephemeral timing info."""
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = await func(*args, **kwargs)
+            end_time = time.time()
+            execution_time = end_time - start_time
+            
+            # Send timing info as ephemeral message
+            # Get interaction from the first argument (after self if it exists)
+            interaction = args[0] if args else kwargs.get('interaction')
+            if interaction and hasattr(interaction, 'followup'):
+                try:
+                    await interaction.followup.send(
+                        content=f"⏱️ {operation_name} dokončeno za {execution_time:.2f} sekund",
+                        ephemeral=True
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send timing info: {e}")
+            
+            return result
+        return wrapper
+    return decorator
+
+
 class TockarBot(commands.Bot):
     """Custom Discord bot class."""
     
@@ -28,6 +56,14 @@ class TockarBot(commands.Bot):
     async def setup_hook(self):
         """Called when the bot is starting up."""
         logger.info("Bot is starting up...")
+        
+        # Load the GIF cog
+        try:
+            await self.load_extension('rubbergod.gif_cog')
+            logger.info("Loaded GIF cog successfully")
+        except Exception as e:
+            logger.error(f"Failed to load GIF cog: {e}")
+        
         # Sync slash commands with Discord
         try:
             if self.guild_ids:
@@ -87,6 +123,7 @@ async def main():
     )
     
     @bot.tree.command(name="tocka", description="Roztočí kolo štěstí a vybere náhodného výherce!")
+    @time_command("Točka")
     async def tocka(interaction: discord.Interaction):
         """Slash command to spin the wheel and pick a winner."""
         # Check if user is allowed to use commands
@@ -96,9 +133,6 @@ async def main():
                 ephemeral=True
             )
             return
-        
-        # Start timing
-        start_time = time.time()
         
         # Defer the response since creating the GIF might take time
         await interaction.response.defer()
@@ -126,23 +160,14 @@ async def main():
             output_file="tocka_wheel.gif"
         )
         
-        # Calculate execution time
-        end_time = time.time()
-        execution_time = end_time - start_time
-        
         # Send the result
         await interaction.followup.send(
-            content=f"🎉 **{winner}** vyhrál Točku! 🎉",
+            content=f"🎉 **{winner}** vyhrál/a Točku! 🎉",
             file=discord.File("tocka_wheel.gif")
-        )
-        
-        # Send timing info as ephemeral message
-        await interaction.followup.send(
-            content=f"⏱️ Generace točky trvala {execution_time:.2f} sekund",
-            ephemeral=True
         )
 
     @bot.tree.command(name="tocka-roles", description="Roztočí kolo štěstí pouze s uživateli, kteří mají nějakou roli!")
+    @time_command("Točka")
     async def tocka_roles(interaction: discord.Interaction):
         """Slash command to spin the wheel with only members who have roles."""
         # Check if user is allowed to use commands
@@ -187,7 +212,7 @@ async def main():
         
         # Send the result
         await interaction.followup.send(
-            content=f"🎉 **{winner}** vyhrál Točku! (pouze uživatelé s rolemi) 🎉",
+            content=f"🎉 **{winner}** vyhrál/a Točku! (pouze uživatelé s rolemi) 🎉",
             file=discord.File("tocka_wheel.gif")
         )
 
