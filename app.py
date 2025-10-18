@@ -3,13 +3,16 @@ import asyncio
 import functools
 import logging
 import time
-
+import random
 import discord
 import wheelspin
 from discord.ext import commands
 from dotenv import load_dotenv
 
 from config import load_config
+from rubbergod_gif.features import ImageHandler
+from io import BytesIO
+from PIL import Image
 
 # Set up logging
 logging.basicConfig(
@@ -56,13 +59,6 @@ class TockarBot(commands.Bot):
     async def setup_hook(self):
         """Called when the bot is starting up."""
         logger.info("Bot is starting up...")
-        
-        # Load the GIF cog
-        try:
-            await self.load_extension('rubbergod.gif_cog')
-            logger.info("Loaded GIF cog successfully")
-        except Exception as e:
-            logger.error(f"Failed to load GIF cog: {e}")
         
         # Sync slash commands with Discord
         try:
@@ -215,6 +211,137 @@ async def main():
             content=f"🎉 **{winner}** vyhrál/a Točku! (pouze uživatelé s rolemi) 🎉",
             file=discord.File("tocka_wheel.gif")
         )
+
+    @bot.tree.command(name="cudlik", description="Ukáže délku tvého čudlíku!")
+    async def cudlik(interaction: discord.Interaction):
+        length = random.randint(0, 25)
+        await interaction.response.send_message(f"Tvůj čudlík má délku: {length}")
+
+    @bot.tree.command(name="ping", description="Odpovědí pong!")
+    async def ping(interaction: discord.Interaction):
+        """Simple ping command that responds with pong (ephemeral)."""
+        await interaction.response.send_message("🏓 Pong!", ephemeral=True)
+
+    # Helper function to get profile picture
+    async def get_profile_picture(user: discord.User, size=None, format="png"):
+        """Get a user's profile picture as a PIL Image."""
+        if size is not None:
+            avatar_data = await user.display_avatar.replace(size=size, format=format).read()
+        else:
+            avatar_data = await user.display_avatar.replace(format=format).read()
+        
+        avatar_image = Image.open(BytesIO(avatar_data)).convert("RGBA")
+        return avatar_image
+
+    # Simple GIF commands using the ImageHandler
+    @bot.tree.command(name="pet", description="Pohlaď někoho! 🐾")
+    @time_command("Pet")
+    async def pet(interaction: discord.Interaction, user: discord.User = None):
+        """Pet someone with animated GIF."""
+        # Check permissions
+        if config.users.allowed_ids and interaction.user.id not in config.users.allowed_ids:
+            await interaction.response.send_message(
+                "❌ Nemáš oprávnění použít tento příkaz!",
+                ephemeral=True
+            )
+            return
+        
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_profile_picture(target_user)
+            frames = ImageHandler.get_pet_frames(avatar)
+            
+            image_binary = BytesIO()
+            frames[0].save(
+                image_binary,
+                format="GIF",
+                save_all=True,
+                append_images=frames[1:],
+                duration=40,
+                loop=0,
+                transparency=0,
+                disposal=2,
+                optimize=False,
+            )
+            image_binary.seek(0)
+            
+            await interaction.followup.send(
+                file=discord.File(image_binary, filename="pet.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
+
+    @bot.tree.command(name="bonk", description="Bonkni někoho! 🔨")
+    @time_command("Bonk")
+    async def bonk(interaction: discord.Interaction, user: discord.User = None):
+        """Bonk someone with animated GIF."""
+        # Check permissions
+        if config.users.allowed_ids and interaction.user.id not in config.users.allowed_ids:
+            await interaction.response.send_message(
+                "❌ Nemáš oprávnění použít tento příkaz!",
+                ephemeral=True
+            )
+            return
+        
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_profile_picture(target_user)
+            frames = ImageHandler.get_bonk_frames(avatar)
+            
+            image_binary = BytesIO()
+            frames[0].save(
+                image_binary,
+                format="GIF",
+                save_all=True,
+                append_images=frames[1:],
+                duration=60,
+                loop=0,
+                transparency=0,
+                disposal=2,
+                optimize=False,
+            )
+            image_binary.seek(0)
+            
+            await interaction.followup.send(
+                file=discord.File(image_binary, filename="bonk.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
+
+    @bot.tree.command(name="catnap", description="Ukradni někoho! 😴")
+    @time_command("Catnap")
+    async def catnap(interaction: discord.Interaction, user: discord.User = None):
+        """Catnap someone with animated GIF."""
+        # Check permissions
+        if config.users.allowed_ids and interaction.user.id not in config.users.allowed_ids:
+            await interaction.response.send_message(
+                "❌ Nemáš oprávnění použít tento příkaz!",
+                ephemeral=True
+            )
+            return
+        
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_profile_picture(target_user, 64)
+            if avatar.size != (64, 64):
+                avatar = avatar.resize((64, 64))
+            
+            avatar = ImageHandler.square_to_circle(avatar)
+            
+            image_binary = BytesIO()
+            ImageHandler.render_catnap(image_binary, avatar)
+            
+            await interaction.followup.send(
+                file=discord.File(image_binary, filename="catnap.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
 
     # Start the bot
     try:
