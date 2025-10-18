@@ -38,7 +38,7 @@ def time_command(operation_name: str):
             if interaction and hasattr(interaction, 'followup'):
                 try:
                     await interaction.followup.send(
-                        content=f"⏱️ {operation_name} dokončeno za {execution_time:.2f} sekund",
+                        content=f"⏱️ {operation_name} dokončena za {execution_time:.2f} sekund",
                         ephemeral=True
                     )
                 except Exception as e:
@@ -122,8 +122,8 @@ async def main():
     @time_command("Točka")
     async def tocka(interaction: discord.Interaction):
         """Slash command to spin the wheel and pick a winner."""
-        # Check if user is allowed to use commands
-        if config.users.allowed_ids and interaction.user.id not in config.users.allowed_ids:
+        # Check if user has elevated permissions
+        if config.users.elevated_ids and interaction.user.id not in config.users.elevated_ids:
             await interaction.response.send_message(
                 "❌ Nemáš oprávnění použít tento příkaz!",
                 ephemeral=True
@@ -166,8 +166,8 @@ async def main():
     @time_command("Točka")
     async def tocka_roles(interaction: discord.Interaction):
         """Slash command to spin the wheel with only members who have roles."""
-        # Check if user is allowed to use commands
-        if config.users.allowed_ids and interaction.user.id not in config.users.allowed_ids:
+        # Check if user has elevated permissions
+        if config.users.elevated_ids and interaction.user.id not in config.users.elevated_ids:
             await interaction.response.send_message(
                 "❌ Nemáš oprávnění použít tento příkaz!",
                 ephemeral=True
@@ -235,7 +235,6 @@ async def main():
 
     # Simple GIF commands using the ImageHandler
     @bot.tree.command(name="pet", description="Pohlaď někoho! 🐾")
-    @time_command("Pet")
     async def pet(interaction: discord.Interaction, user: discord.User = None):
         """Pet someone with animated GIF."""
         await interaction.response.defer()
@@ -266,7 +265,6 @@ async def main():
             await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
 
     @bot.tree.command(name="bonk", description="Bonkni někoho! 🔨")
-    @time_command("Bonk")
     async def bonk(interaction: discord.Interaction, user: discord.User = None):
         """Bonk someone with animated GIF."""
         await interaction.response.defer()
@@ -296,7 +294,6 @@ async def main():
             await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
 
     @bot.tree.command(name="catnap", description="Ukradni někoho! 😴")
-    @time_command("Catnap")
     async def catnap(interaction: discord.Interaction, user: discord.User = None):
         """Catnap someone with animated GIF."""
         await interaction.response.defer()

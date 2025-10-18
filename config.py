@@ -24,10 +24,10 @@ class BotConfig:
     @environ.config
     class Users:
         """User-specific configuration."""
-        allowed_ids = environ.var(
+        elevated_ids = environ.var(
             default=None,
             converter=lambda x: [int(id.strip()) for id in x.split(',')] if x else None,
-            help="Comma-separated User IDs allowed to use commands (e.g., '123456789,987654321')"
+            help="Comma-separated User IDs with elevated permissions (e.g., '123456789,987654321')"
         )
     
     bot = environ.group(Bot)
