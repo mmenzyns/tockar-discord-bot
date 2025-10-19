@@ -2,17 +2,19 @@
 import asyncio
 import functools
 import logging
-import time
 import random
+import time
+from concurrent.futures import ThreadPoolExecutor
+from io import BytesIO
+
 import discord
 import wheelspin
 from discord.ext import commands
 from dotenv import load_dotenv
+from PIL import Image
 
 from config import load_config
 from rubbergod_gif.features import ImageHandler
-from io import BytesIO
-from PIL import Image
 
 # Set up logging
 logging.basicConfig(
@@ -162,7 +164,7 @@ async def main():
             file=discord.File("tocka_wheel.gif")
         )
 
-    @bot.tree.command(name="tocka-roles", description="Roztočí kolo štěstí pouze s uživateli, kteří mají nějakou roli!")
+    @bot.tree.command(name="tocka-role", description="Roztočí kolo štěstí pouze s uživateli, kteří mají nějakou roli!")
     @time_command("Točka")
     async def tocka_roles(interaction: discord.Interaction):
         """Slash command to spin the wheel with only members who have roles."""
@@ -209,6 +211,53 @@ async def main():
         # Send the result
         await interaction.followup.send(
             content=f"🎉 **{winner}** vyhrál/a Točku! 🎉",
+            file=discord.File("tocka_wheel.gif")
+        )
+
+    @bot.tree.command(name="tocka-vlastni", description="Roztočí kolo štěstí s vlastními možnostmi!")
+    @discord.app_commands.describe(
+        options="Seznam možností oddělených čárkami (např: 'Možnost 1, Možnost 2, Možnost 3')",
+        separator="Oddělovač možností (výchozí: čárka)"
+    )
+    @discord.app_commands.choices(separator=[
+        discord.app_commands.Choice(name="Čárka (,)", value=","),
+        discord.app_commands.Choice(name="Středník (;)", value=";"),
+        discord.app_commands.Choice(name="Nový řádek", value="\n"),
+        discord.app_commands.Choice(name="Mezera ( )", value=" ")
+    ])
+    @time_command("Točka")
+    async def tocka_vlastni(interaction: discord.Interaction, 
+                           options: str,
+                           separator: str = ","):
+        """Slash command to spin the wheel with custom input."""
+        # Defer the response since creating the GIF might take time
+        await interaction.response.defer()
+
+        # Parse the options string
+        option_list = [option.strip() for option in options.split(separator) if option.strip()]
+
+        # Validate input
+        if not option_list:
+            await interaction.followup.send("❌ Žádné platné možnosti nebyly zadány!")
+            return
+
+        if len(option_list) < 2:
+            await interaction.followup.send("❌ Musíš zadat alespoň 2 možnosti!")
+            return
+
+        if len(option_list) > 100:
+            await interaction.followup.send("❌ Příliš mnoho možností! Maximum je 100.")
+            return
+
+        # Create the spinning wheel GIF with frame limit
+        winner = wheelspin.create_spinning_wheel(
+            option_list,
+            output_file="tocka_wheel.gif",
+        )
+
+        # Send the result
+        await interaction.followup.send(
+            content=f"🎉 **{winner}**! 🎉",
             file=discord.File("tocka_wheel.gif")
         )
 
