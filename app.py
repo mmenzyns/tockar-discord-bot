@@ -349,10 +349,11 @@ async def main():
         """Bonk someone with animated GIF."""
         if (
             config.users.viktor_user_id
-            and discord.Permissions.moderate_members
             and random.random() < 0.5
             and interaction.guild
         ):
+            if not discord.Permissions.moderate_members:
+                await interaction.response.send_message("❌ Nemám oprávnění timeoutnout Viktora!")
             # Timeout viktor instead of bonk
             try:
                 viktor_member = interaction.guild.get_member(
