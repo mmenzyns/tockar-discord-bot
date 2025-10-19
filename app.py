@@ -4,6 +4,7 @@ import functools
 import logging
 import random
 import time
+from datetime import timedelta
 from io import BytesIO
 
 import discord
@@ -15,14 +16,14 @@ from PIL import Image
 from config import load_config
 from rubbergod_gif.features import ImageHandler
 from vlcice_gif import (
-    get_users_avatar,
-    get_pet_frames,
-    get_whip_frames,
-    get_spank_frames,
-    get_lick_frames,
+    create_transparent_gif,
     get_hyperlick_frames,
     get_hyperpet_frames,
-    create_transparent_gif,
+    get_lick_frames,
+    get_pet_frames,
+    get_spank_frames,
+    get_users_avatar,
+    get_whip_frames,
 )
 
 # Set up logging
@@ -273,7 +274,7 @@ async def main():
     @bot.tree.command(name="cudlik", description="Ukáž délku svého čudlíku!")
     async def cudlik(interaction: discord.Interaction):
         length = random.randint(0, 25)
-        await interaction.response.send_message(f"Tvůj čudlík má délku: {length}")
+        await interaction.response.send_message(f"Tvůj čudlík má délku: {length} cm")
 
     @bot.tree.command(name="ping", description="Odpovědí pong!")
     async def ping(interaction: discord.Interaction):
@@ -325,6 +326,19 @@ async def main():
     @bot.tree.command(name="bonk", description="Bonkni někoho! 🔨")
     async def bonk(interaction: discord.Interaction, user: discord.User = None):
         """Bonk someone with animated GIF."""
+        if config.users.viktor_user_id and discord.Permissions.moderate_members and random.random() < 0.5 and interaction.guild:
+            # Timeout viktor instead of bonk
+            try:
+                viktor_member = interaction.guild.get_member(config.users.viktor_user_id)
+                if viktor_member:
+                    await viktor_member.timeout(timedelta(seconds=60*5), reason="Bonk!")
+                    await interaction.response.send_message(
+                        "Viktor byl timeoutován místo bonku! ⏲️"
+                    )
+                    return
+            except Exception as e:
+                logger.error(f"Failed to timeout Viktor: {e}")
+
         await interaction.response.defer()
         target_user = user or interaction.user
         

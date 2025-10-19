@@ -29,6 +29,11 @@ class BotConfig:
             converter=lambda x: [int(id.strip()) for id in x.split(',')] if x else None,
             help="Comma-separated User IDs with elevated permissions (e.g., '123456789,987654321')"
         )
+        viktor_user_id = environ.var(
+            default=None,
+            converter=lambda x: int(x) if x else None,
+            help="User ID for special bonk timeout behavior"
+        )
     
     bot = environ.group(Bot)
     guild = environ.group(Guild)
