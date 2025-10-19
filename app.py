@@ -361,10 +361,10 @@ async def main():
                 )
                 if viktor_member:
                     await viktor_member.timeout(
-                        timedelta(seconds=60 * 5), reason="Bonk!"
+                        timedelta(seconds=60 * 30), reason="Bonk!"
                     )
                     await interaction.response.send_message(
-                        "Viktor byl timeoutován místo bonku! ⏲️"
+                        "Viktor byl timeoutován na půl hodiny místo bonku! ⏲️"
                     )
                     return
             except Exception as e:
