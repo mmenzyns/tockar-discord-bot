@@ -6,7 +6,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 # Use images path relative to the project root
-IMAGES_PATH = Path("images")
+IMAGES_PATH = Path("rubbergod_gif/images")
 
 
 class ImageHandler:

@@ -9,4 +9,6 @@ dependencies = [
     "dotenv>=0.9.9",
     "environ-config>=24.0.0",
     "wheelspin-gif>=1.0.0",
+    "numpy>=1.21.0",
+    "aiohttp>=3.8.0",
 ]

@@ -4,7 +4,6 @@ import functools
 import logging
 import random
 import time
-from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 
 import discord
@@ -15,6 +14,16 @@ from PIL import Image
 
 from config import load_config
 from rubbergod_gif.features import ImageHandler
+from vlcice_gif import (
+    get_users_avatar,
+    get_pet_frames,
+    get_whip_frames,
+    get_spank_frames,
+    get_lick_frames,
+    get_hyperlick_frames,
+    get_hyperpet_frames,
+    create_transparent_gif,
+)
 
 # Set up logging
 logging.basicConfig(
@@ -164,7 +173,7 @@ async def main():
             file=discord.File("tocka_wheel.gif")
         )
 
-    @bot.tree.command(name="tocka-role", description="Roztočí kolo štěstí pouze s uživateli, kteří mají nějakou roli!")
+    @bot.tree.command(name="tocka-roles", description="Roztočí kolo štěstí pouze s uživateli, kteří mají nějakou roli!")
     @time_command("Točka")
     async def tocka_roles(interaction: discord.Interaction):
         """Slash command to spin the wheel with only members who have roles."""
@@ -342,6 +351,23 @@ async def main():
         except Exception as e:
             await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
 
+    @bot.tree.command(name="pet-subtle", description="Pohlaď někoho (vlcice verze)! 🐾✨")
+    async def pet_vlcice(interaction: discord.Interaction, user: discord.User = None):
+        """Pet someone with vlcice_gif animated GIF (14 frames)."""
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_users_avatar(target_user)
+            frames = get_pet_frames(avatar)
+            gif_binary = create_transparent_gif(frames, duration=40)
+            
+            await interaction.followup.send(
+                file=discord.File(gif_binary, filename="pet-vlcice.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
+
     @bot.tree.command(name="catnap", description="Ukradni někoho! 😴")
     async def catnap(interaction: discord.Interaction, user: discord.User = None):
         """Catnap someone with animated GIF."""
@@ -360,6 +386,91 @@ async def main():
             
             await interaction.followup.send(
                 file=discord.File(image_binary, filename="catnap.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
+
+    @bot.tree.command(name="whip", description="Ošlehej někoho bičem! 🞭")
+    async def whip(interaction: discord.Interaction, user: discord.User = None):
+        """Whip someone with animated GIF."""
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_users_avatar(target_user)
+            frames = get_whip_frames(avatar)
+            image_binary = create_transparent_gif(frames, duration=30)
+            
+            await interaction.followup.send(
+                file=discord.File(image_binary, filename="whip.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
+
+    @bot.tree.command(name="spank", description="Dej někomu facku! 👋")
+    async def spank(interaction: discord.Interaction, user: discord.User = None):
+        """Spank someone with animated GIF."""
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_users_avatar(target_user)
+            frames = get_spank_frames(avatar)
+            image_binary = create_transparent_gif(frames, duration=30)
+            
+            await interaction.followup.send(
+                file=discord.File(image_binary, filename="spank.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
+
+    @bot.tree.command(name="lick", description="Olízni někoho! 👅")
+    async def lick(interaction: discord.Interaction, user: discord.User = None):
+        """Lick someone with animated GIF."""
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_users_avatar(target_user)
+            frames = get_lick_frames(avatar)
+            image_binary = create_transparent_gif(frames, duration=30)
+            
+            await interaction.followup.send(
+                file=discord.File(image_binary, filename="lick.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
+
+    @bot.tree.command(name="hyperlick", description="Olízni někoho psychedelicky! 🌈👅")
+    async def hyperlick(interaction: discord.Interaction, user: discord.User = None):
+        """Lick someone with psychedelic animated GIF."""
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_users_avatar(target_user)
+            frames = get_hyperlick_frames(avatar)
+            image_binary = create_transparent_gif(frames, duration=30)
+            
+            await interaction.followup.send(
+                file=discord.File(image_binary, filename="hyperlick.gif")
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
+
+    @bot.tree.command(name="hyperpet", description="Pohlaď někoho psychedelicky! 🌈🐾")
+    async def hyperpet_cmd(interaction: discord.Interaction, user: discord.User = None):
+        """Pet someone with psychedelic animated GIF."""
+        await interaction.response.defer()
+        target_user = user or interaction.user
+        
+        try:
+            avatar = await get_users_avatar(target_user)
+            frames = get_hyperpet_frames(avatar)
+            image_binary = create_transparent_gif(frames, duration=30)
+            
+            await interaction.followup.send(
+                file=discord.File(image_binary, filename="hyperpet.gif")
             )
         except Exception as e:
             await interaction.followup.send(f"❌ Chyba při vytváření GIF: {e}")
