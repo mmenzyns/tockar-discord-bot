@@ -9,6 +9,7 @@ environ-config==24.1.0
 frozenlist==1.8.0
 idna==3.11
 multidict==6.7.0
+numpy==2.3.4
 pillow==12.0.0
 propcache==0.4.1
 python-dotenv==1.1.1
