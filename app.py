@@ -14,7 +14,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from PIL import Image
 
-from config import load_config
+from config import load_config, BotConfig
 from rubbergod_gif.features import ImageHandler
 from vlcice_gif import (
     create_transparent_gif,
@@ -67,14 +67,15 @@ def time_command(operation_name: str):
 class TockarBot(commands.Bot):
     """Custom Discord bot class."""
 
-    def __init__(self, guild_ids=None, *args, **kwargs):
+    def __init__(self, guild_ids=None, config=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.guild_ids = guild_ids or []
+        self.config: BotConfig = config
 
     async def setup_hook(self):
         """Called when the bot is starting up."""
         logger.info("Bot is starting up...")
-
+        logger.info(f"Using config: {self.config}")
         # Sync slash commands with Discord
         try:
             if self.guild_ids:
@@ -95,6 +96,24 @@ class TockarBot(commands.Bot):
         """Called when the bot is ready."""
         logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
         logger.info(f"Connected to {len(self.guilds)} guilds")
+
+        # Send startup message to configured channel
+        if self.config and self.config.bot.startup_channel_id:
+            try:
+                channel = self.get_channel(self.config.bot.startup_channel_id)
+                if channel:
+                    if not discord.Permissions.moderate_members:
+                        await channel.send(
+                            "⚠️ Upozornění: Bot nemá oprávnění pro správu členů, "
+                            "některé funkce nemusí fungovat správně."
+                        )
+                    await channel.send("✅ Bot byl spuštěn!")
+                else:
+                    logger.warning(f"Startup channel {self.config.bot.startup_channel_id} not found")
+            except Exception as e:
+                logger.error(f"Failed to send startup message: {e}")
+        else:
+            logger.warning("No startup channel configured")
         logger.info("------")
 
     async def on_message(self, message: discord.Message):
@@ -128,6 +147,7 @@ async def main():
     # Create bot instance
     bot = TockarBot(
         guild_ids=config.guild.ids,
+        config=config,
         command_prefix=config.bot.prefix,
         intents=intents,
         help_command=commands.DefaultHelpCommand(),
@@ -268,15 +288,15 @@ async def main():
 
         # Validate input
         if not option_list:
-            await interaction.followup.send("❌ Žádné platné možnosti nebyly zadány!")
+            await interaction.followup.send("❌ Žádné platné možnosti nebyly zadány!", ephemeral=True)
             return
 
         if len(option_list) < 2:
-            await interaction.followup.send("❌ Musíš zadat alespoň 2 možnosti!")
+            await interaction.followup.send("❌ Musíš zadat alespoň 2 možnosti!", ephemeral=True)
             return
 
         if len(option_list) > 100:
-            await interaction.followup.send("❌ Příliš mnoho možností! Maximum je 100.")
+            await interaction.followup.send("❌ Příliš mnoho možností! Maximum je 100.", ephemeral=True)
             return
 
         # Create the spinning wheel GIF with frame limit
@@ -347,32 +367,54 @@ async def main():
     @bot.tree.command(name="bonk", description="Bonkni někoho! 🔨")
     async def bonk(interaction: discord.Interaction, user: discord.User = None):
         """Bonk someone with animated GIF."""
-        if (
-            config.users.viktor_user_id
-            and random.random() < 0.5
-            and interaction.guild
-        ):
-            if not discord.Permissions.moderate_members:
-                await interaction.response.send_message("❌ Nemám oprávnění timeoutnout Viktora!")
-            # Timeout viktor instead of bonk
-            try:
-                viktor_member = interaction.guild.get_member(
-                    config.users.viktor_user_id
-                )
-                if viktor_member:
-                    await viktor_member.timeout(
-                        timedelta(seconds=60 * 30), reason="Bonk!"
-                    )
-                    await interaction.response.send_message(
-                        "Viktor byl timeoutován na půl hodiny místo bonku! ⏲️"
-                    )
-                    return
-            except Exception as e:
-                logger.error(f"Failed to timeout Viktor: {e}")
-
         await interaction.response.defer()
+        
         target_user = user or interaction.user
+        
+        # 50% chance to timeout the command caller instead of bonking
+        if random.choice([True, False, False]) and interaction.guild:
+            try:
+                # Get the caller's member object
+                caller_member = interaction.guild.get_member(interaction.user.id)
+                if not caller_member:
+                    logger.warning(f"Could not find caller member {interaction.user.id} in guild")
+                else:
+                    # Check if bot has permission to timeout
+                    bot_member = interaction.guild.get_member(interaction.client.user.id)
+                    if not bot_member.guild_permissions.moderate_members:
+                        await interaction.followup.send(
+                            "⚠️ Bot nemá oprávnění 'Moderate Members' pro timeout!",
+                        )
+                    # Check if caller is not higher than bot
+                    elif caller_member.top_role < bot_member.top_role:
+                        # Perform timeout on the caller
+                        timeout_length_minutes = 5
+                        await caller_member.timeout(
+                            timedelta(minutes=timeout_length_minutes), 
+                            reason="Bonk backfired!"
+                        )
+                        await interaction.followup.send(
+                            f"💥 Bonk se obrátil proti tobě! {caller_member.display_name} byl timeoutován na {timeout_length_minutes} minut! ⏲️"
+                        )
+                        # Don't send GIF, just return
+                        return
+                    else:
+                        logger.info(
+                            f"Cannot timeout caller {caller_member.id} due to role hierarchy."
+                        )
+            except discord.Forbidden:
+                await interaction.followup.send(
+                    "❌ Nemám oprávnění timeoutovat tohoto uživatele!",
+                    ephemeral=True
+                )
+            except Exception as e:
+                logger.error(f"Failed to timeout user: {e}")
+                await interaction.followup.send(
+                    f"❌ Chyba při timeoutování: {e}",
+                    ephemeral=True
+                )
 
+        # Send bonk GIF
         try:
             avatar = await get_profile_picture(target_user)
             frames = ImageHandler.get_bonk_frames(avatar)
