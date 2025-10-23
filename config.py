@@ -34,6 +34,11 @@ class BotConfig:
             converter=lambda x: [int(id.strip()) for id in x.split(',')] if x else None,
             help="Comma-separated User IDs with elevated permissions (e.g., '123456789,987654321')"
         )
+        blocked_ids = environ.var(
+            default=None,
+            converter=lambda x: [int(id.strip()) for id in x.split(',')] if x else None,
+            help="Comma-separated User IDs that are blocked from using bot commands"
+        )
     
     bot = environ.group(Bot)
     guild = environ.group(Guild)

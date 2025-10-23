@@ -76,6 +76,10 @@ class TockarBot(commands.Bot):
         """Called when the bot is starting up."""
         logger.info("Bot is starting up...")
         logger.info(f"Using config: {self.config}")
+        
+        # Add interaction check for blocked users
+        self.tree.interaction_check = self._global_interaction_check
+        
         # Sync slash commands with Discord
         try:
             if self.guild_ids:
@@ -91,6 +95,18 @@ class TockarBot(commands.Bot):
                 logger.info(f"Synced {len(synced)} command(s) globally")
         except Exception as e:
             logger.error(f"Failed to sync commands: {e}")
+
+    async def _global_interaction_check(self, interaction: discord.Interaction) -> bool:
+        """Global check for all interactions to block certain users."""
+        if self.config and self.config.users.blocked_ids:
+            if interaction.user.id in self.config.users.blocked_ids:
+                await interaction.response.send_message(
+                    "🚫 Nemáš povolení používat tohoto bota.",
+                    ephemeral=True
+                )
+                logger.info(f"Blocked user {interaction.user.id} ({interaction.user.name}) attempted to use command")
+                return False
+        return True
 
     async def on_ready(self):
         """Called when the bot is ready."""
