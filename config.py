@@ -40,9 +40,19 @@ class BotConfig:
             help="Comma-separated User IDs that are blocked from using bot commands"
         )
     
+    @environ.config
+    class Roles:
+        """Role-specific configuration."""
+        tocka = environ.var(
+            default=None,
+            converter=lambda x: [int(id.strip()) for id in x.split(',')] if x else None,
+            help="Comma-separated Role IDs for tocka command filtering"
+        )
+    
     bot = environ.group(Bot)
     guild = environ.group(Guild)
     users = environ.group(Users)
+    roles = environ.group(Roles)
 
 
 def load_config() -> BotConfig:

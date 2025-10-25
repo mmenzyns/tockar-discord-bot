@@ -218,7 +218,7 @@ async def main():
 
     @bot.tree.command(
         name="tocka-roles",
-        description="Roztočí kolo štěstí pouze s uživateli, kteří mají nějakou roli!",
+        description="Roztočí kolo štěstí pouze s uživateli, kteří mají specifickou roli!",
     )
     @time_command("Točka")
     async def tocka_roles(interaction: discord.Interaction):
@@ -246,16 +246,26 @@ async def main():
             # Otherwise use text channel members
             members = channel.members
 
-        # Filter out bots AND members who only have @everyone role
+        # Filter out bots AND members who only have @everyone role or specific roles
         member_names = []
-        for member in members:
-            if not member.bot:
-                # Check if member has any role other than @everyone
-                member_roles = [
-                    role for role in member.roles if role.name != "@everyone"
-                ]
-                if member_roles:  # Only include if they have at least one role
-                    member_names.append(member.display_name)
+        target_role_ids = config.roles.tocka if config.roles.tocka else None
+        
+        if target_role_ids:
+            # Check if member has any of the specified roles
+            for member in members:
+                if not member.bot:
+                    member_role_ids = [role.id for role in member.roles]
+                    if any(role_id in member_role_ids for role_id in target_role_ids):
+                        member_names.append(member.display_name)
+        else:
+            # Fallback: check if member has any role other than @everyone
+            for member in members:
+                if not member.bot:
+                    member_roles = [
+                        role for role in member.roles if role.name != "@everyone"
+                    ]
+                    if member_roles:  # Only include if they have at least one role
+                        member_names.append(member.display_name)
 
         if not member_names:
             await interaction.followup.send(
