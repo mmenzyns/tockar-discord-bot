@@ -64,6 +64,26 @@ def time_command(operation_name: str):
     return decorator
 
 
+def require_elevated_permissions(config):
+    """Decorator to check if user has elevated permissions."""
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(interaction: discord.Interaction, *args, **kwargs):
+            # Check if user has elevated permissions
+            if (
+                config.users.elevated_ids
+                and interaction.user.id not in config.users.elevated_ids
+            ):
+                await interaction.response.send_message(
+                    "❌ Nemáš oprávnění použít tento příkaz!", ephemeral=True
+                )
+                return
+
+            return await func(interaction, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
 class TockarBot(commands.Bot):
     """Custom Discord bot class."""
 
@@ -172,19 +192,10 @@ async def main():
     @bot.tree.command(
         name="tocka", description="Roztočí kolo štěstí a vybere náhodného výherce!"
     )
+    @require_elevated_permissions(config)
     @time_command("Točka")
     async def tocka(interaction: discord.Interaction):
         """Slash command to spin the wheel and pick a winner."""
-        # Check if user has elevated permissions
-        if (
-            config.users.elevated_ids
-            and interaction.user.id not in config.users.elevated_ids
-        ):
-            await interaction.response.send_message(
-                "❌ Nemáš oprávnění použít tento příkaz!", ephemeral=True
-            )
-            return
-
         # Defer the response since creating the GIF might take time
         await interaction.response.defer()
 
@@ -220,19 +231,10 @@ async def main():
         name="tocka-roles",
         description="Roztočí kolo štěstí pouze s uživateli, kteří mají specifickou roli!",
     )
+    @require_elevated_permissions(config)
     @time_command("Točka")
     async def tocka_roles(interaction: discord.Interaction):
         """Slash command to spin the wheel with only members who have roles."""
-        # Check if user has elevated permissions
-        if (
-            config.users.elevated_ids
-            and interaction.user.id not in config.users.elevated_ids
-        ):
-            await interaction.response.send_message(
-                "❌ Nemáš oprávnění použít tento příkaz!", ephemeral=True
-            )
-            return
-
         # Defer the response since creating the GIF might take time
         await interaction.response.defer()
 
