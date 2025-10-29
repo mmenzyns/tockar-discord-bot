@@ -86,12 +86,12 @@ def require_elevated_permissions(config):
 
 class TockarBot(commands.Bot):
     """Custom Discord bot class."""
+    _startup_complete = False  # Flag to track if startup has been completed
 
     def __init__(self, guild_ids=None, config=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.guild_ids = guild_ids or []
         self.config: BotConfig = config
-        self._startup_complete = False  # Flag to track if startup has been completed
 
     async def setup_hook(self):
         """Called when the bot is starting up."""
