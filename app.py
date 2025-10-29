@@ -134,33 +134,42 @@ class TockarBot(commands.Bot):
         logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
         logger.info(f"Connected to {len(self.guilds)} guilds")
 
-        # Only send startup message on first ready event
-        if not self._startup_complete:
-            # Send startup message to configured channel
-            if self.config and self.config.bot.startup_channel_id:
-                try:
-                    channel = self.get_channel(self.config.bot.startup_channel_id)
-                    if channel:
-                        if not discord.Permissions.moderate_members:
-                            await channel.send(
-                                "⚠️ Upozornění: Bot nemá oprávnění pro správu členů, "
-                                "některé funkce nemusí fungovat správně."
-                            )
-                        await channel.send("✅ Bot byl spuštěn!")
-                    else:
-                        logger.warning(f"Startup channel {self.config.bot.startup_channel_id} not found")
-                except Exception as e:
-                    logger.error(f"Failed to send startup message: {e}")
-            else:
-                logger.warning("No startup channel configured")
-            
-            # Mark startup as complete
-            self._startup_complete = True
-            logger.info("Startup sequence completed")
-        else:
+        # Skip startup message if already completed
+        if self._startup_complete:
             logger.info("Bot reconnected (startup message already sent)")
+            logger.info("------")
+            return
+
+        self._startup_complete = True
         
+        # Send startup message only on first ready event
+        await self._send_startup_message()
+        
+        # Mark startup as complete
+        logger.info("Startup sequence completed")
         logger.info("------")
+
+    async def _send_startup_message(self):
+        """Send startup message to configured channel."""
+        if not self.config or not self.config.bot.startup_channel_id:
+            logger.warning("No startup channel configured")
+            return
+
+        try:
+            channel = self.get_channel(self.config.bot.startup_channel_id)
+            if not channel:
+                logger.warning(f"Startup channel {self.config.bot.startup_channel_id} not found")
+                return
+
+            if not discord.Permissions.moderate_members:
+                await channel.send(
+                    "⚠️ Upozornění: Bot nemá oprávnění pro správu členů, "
+                    "některé funkce nemusí fungovat správně."
+                )
+            await channel.send("✅ Bot byl spuštěn!")
+            
+        except Exception as e:
+            logger.error(f"Failed to send startup message: {e}")
 
     async def on_message(self, message: discord.Message):
         """Called when a message is received."""
