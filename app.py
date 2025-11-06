@@ -65,21 +65,32 @@ def time_command(operation_name: str):
 
 
 def require_elevated_permissions(config):
-    """Decorator to check if user has elevated permissions."""
+    """Decorator to check if user has elevated permissions (user ID or role)."""
     def decorator(func):
         @functools.wraps(func)
         async def wrapper(interaction: discord.Interaction, *args, **kwargs):
-            # Check if user has elevated permissions
-            if (
-                config.users.elevated_ids
-                and interaction.user.id not in config.users.elevated_ids
-            ):
-                await interaction.response.send_message(
-                    "❌ Nemáš oprávnění použít tento příkaz!", ephemeral=True
-                )
-                return
+            # Check if user has elevated permissions by user ID
+            if config.users.elevated_ids and interaction.user.id in config.users.elevated_ids:
+                return await func(interaction, *args, **kwargs)
+            
+            # Check if user has elevated permissions by role
+            if config.users.elevated_roles and interaction.guild:
+                member = interaction.guild.get_member(interaction.user.id)
+                if member:
+                    user_role_ids = [role.id for role in member.roles]
+                    if any(role_id in user_role_ids for role_id in config.users.elevated_roles):
+                        return await func(interaction, *args, **kwargs)
+            
+            # If no elevated IDs/roles configured, allow anyone
+            if not config.users.elevated_ids and not config.users.elevated_roles:
+                return await func(interaction, *args, **kwargs)
+            
+            # User doesn't have elevated permissions
+            await interaction.response.send_message(
+                "❌ Nemáš oprávnění použít tento příkaz!", ephemeral=True
+            )
+            return
 
-            return await func(interaction, *args, **kwargs)
         return wrapper
     return decorator
 
